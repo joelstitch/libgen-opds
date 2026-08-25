@@ -9,7 +9,7 @@ import (
 // Feed root element for acquisition or navigation feed
 type Feed struct {
 	XMLName      xml.Name  `xml:"feed"`
-	ID           string    `xml:"id,omitempty",`
+	ID           string    `xml:"id,omitempty"`
 	Title        string    `xml:"title,omitempty"`
 	Updated      time.Time `xml:"updated,omitempty"`
 	Entries      []Entry   `xml:"entry,omitempty"`
