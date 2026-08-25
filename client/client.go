@@ -27,9 +27,12 @@ var mimeMapping map[string]string = map[string]string{
 	"lit":  "application/x-ms-reader",
 }
 
-func GetPage(page string) io.ReadCloser {
-	resp, _ := http.Get(page)
-	return resp.Body
+func GetPage(page string) (io.ReadCloser, error) {
+	resp, err := http.Get(page)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
 }
 
 func StripText(text string) string {

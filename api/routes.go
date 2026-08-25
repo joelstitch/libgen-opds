@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/xml"
+	"log"
 	"net/http"
 	"net/url"
 	"reichard.io/libgen-opds/client"
@@ -134,8 +135,16 @@ func (api *API) DownloadHandler(w http.ResponseWriter, r *http.Request) {
 		infoURL = "http://library.gift/main/" + id
 	}
 
+	// Acquire info page
+	body, err := client.GetPage(infoURL)
+	if err != nil {
+		log.Printf("upstream fetch failed for %s: %v", infoURL, err)
+		http.Error(w, "upstream unavailable", http.StatusBadGateway)
+		return
+	}
+	defer body.Close()
+
 	// Parse & Derive Download URL
-	body := client.GetPage(infoURL)
 	downloadURL := client.ParseLibGenDownloadURL(body)
 
 	// Redirect
@@ -161,7 +170,14 @@ func (api *API) GoodReadsMostReadHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Acquire & Parse Page Source
-	body := client.GetPage("https://www.goodreads.com/book/most_read?category=all&country=US&duration=" + duration)
+	mostReadURL := "https://www.goodreads.com/book/most_read?category=all&country=US&duration=" + duration
+	body, err := client.GetPage(mostReadURL)
+	if err != nil {
+		log.Printf("upstream fetch failed for %s: %v", mostReadURL, err)
+		http.Error(w, "upstream unavailable", http.StatusBadGateway)
+		return
+	}
+	defer body.Close()
 	allEntries := client.ParseGoodReads(body)
 
 	// Build XML
@@ -187,7 +203,14 @@ func (api *API) LibZMostPopularHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Acquire & Parse Page Source
-	body := client.GetPage("https://usa1lib.org/popular.php")
+	popURL := "https://usa1lib.org/popular.php"
+	body, err := client.GetPage(popURL)
+	if err != nil {
+		log.Printf("upstream fetch failed for %s: %v", popURL, err)
+		http.Error(w, "upstream unavailable", http.StatusBadGateway)
+		return
+	}
+	defer body.Close()
 	allEntries := client.ParseZLibPopular(body)
 
 	// Build XML
@@ -222,12 +245,24 @@ func (api *API) SearchHandler(w http.ResponseWriter, r *http.Request) {
 	if searchType == "fiction" {
 		// Search Fiction
 		url := "https://libgen.is/fiction/?q=" + url.QueryEscape(query) + "&language=English"
-		body := client.GetPage(url)
+		body, err := client.GetPage(url)
+		if err != nil {
+			log.Printf("upstream fetch failed for %s: %v", url, err)
+			http.Error(w, "upstream unavailable", http.StatusBadGateway)
+			return
+		}
+		defer body.Close()
 		allEntries = client.ParseLibGenFiction(body)
 	} else if searchType == "non-fiction" {
 		// Search NonFiction
 		url := "https://libgen.is/search.php?req=" + url.QueryEscape(query)
-		body := client.GetPage(url)
+		body, err := client.GetPage(url)
+		if err != nil {
+			log.Printf("upstream fetch failed for %s: %v", url, err)
+			http.Error(w, "upstream unavailable", http.StatusBadGateway)
+			return
+		}
+		defer body.Close()
 		allEntries = client.ParseLibGenNonFiction(body)
 	} else {
 		// Offer Options
