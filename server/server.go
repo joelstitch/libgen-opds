@@ -35,8 +35,12 @@ func (s *Server) StartServer() {
 	listenAddr := (iface + ":" + port)
 
 	s.httpServer = &http.Server{
-		Handler: s.API,
-		Addr:    listenAddr,
+		Handler:           s.API,
+		Addr:              listenAddr,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
 	go s.httpServer.ListenAndServe()
