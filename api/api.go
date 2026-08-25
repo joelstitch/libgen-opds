@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"reichard.io/libgen-opds/mirrors"
 )
 
 type API struct {
 	Router   *http.ServeMux
 	Username string
 	Password string
+	Resolver *mirrors.Resolver
 }
 
 func (api *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +22,7 @@ func (api *API) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("- %s - %s %s - %v", r.RemoteAddr, r.Method, r.URL, time.Since(start))
 }
 
-func NewApi() *API {
+func NewApi(resolver *mirrors.Resolver) *API {
 	username := os.Getenv("API_USERNAME")
 	if username == "" {
 		log.Fatal("environment variable API_USERNAME must be set!")
@@ -33,6 +36,7 @@ func NewApi() *API {
 		Router:   http.NewServeMux(),
 		Username: username,
 		Password: password,
+		Resolver: resolver,
 	}
 
 	api.Router.HandleFunc("/", api.basicAuth(api.RootHandler))

@@ -131,11 +131,11 @@ func (api *API) DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	var infoURL string
 	switch downloadType {
 	case "fiction":
-		infoURL = "http://library.gift/fiction/" + id
+		infoURL = api.Resolver.LibGenBase() + "/fiction/" + id
 	case "non-fiction":
-		infoURL = "http://library.gift/main/" + id
+		infoURL = api.Resolver.LibGenBase() + "/main/" + id
 	case "zlib":
-		infoURL = "https://usa1lib.org/book/" + id
+		infoURL = api.Resolver.ZLibBase() + "/book/" + id
 	default:
 		http.Error(w, "unknown download type", http.StatusBadRequest)
 		return
@@ -219,7 +219,7 @@ func (api *API) LibZMostPopularHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Acquire & Parse Page Source
-	popURL := "https://usa1lib.org/popular.php"
+	popURL := api.Resolver.ZLibBase() + "/popular.php"
 	body, err := client.GetPage(popURL)
 	if err != nil {
 		log.Printf("upstream fetch failed for %s: %v", popURL, err)
@@ -260,7 +260,7 @@ func (api *API) SearchHandler(w http.ResponseWriter, r *http.Request) {
 
 	if searchType == "fiction" {
 		// Search Fiction
-		url := "https://libgen.is/fiction/?q=" + url.QueryEscape(query) + "&language=English"
+		url := api.Resolver.LibGenBase() + "/fiction/?q=" + url.QueryEscape(query) + "&language=English"
 		body, err := client.GetPage(url)
 		if err != nil {
 			log.Printf("upstream fetch failed for %s: %v", url, err)
@@ -271,7 +271,7 @@ func (api *API) SearchHandler(w http.ResponseWriter, r *http.Request) {
 		allEntries = client.ParseLibGenFiction(body)
 	} else if searchType == "non-fiction" {
 		// Search NonFiction
-		url := "https://libgen.is/search.php?req=" + url.QueryEscape(query)
+		url := api.Resolver.LibGenBase() + "/search.php?req=" + url.QueryEscape(query)
 		body, err := client.GetPage(url)
 		if err != nil {
 			log.Printf("upstream fetch failed for %s: %v", url, err)

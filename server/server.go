@@ -7,6 +7,7 @@ import (
 
 	"os"
 	"reichard.io/libgen-opds/api"
+	"reichard.io/libgen-opds/mirrors"
 )
 
 type Server struct {
@@ -15,7 +16,8 @@ type Server struct {
 }
 
 func NewServer() *Server {
-	api := api.NewApi()
+	resolver := mirrors.New()
+	api := api.NewApi(resolver)
 
 	return &Server{
 		API: api,
