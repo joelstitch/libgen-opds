@@ -129,10 +129,16 @@ func (api *API) DownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Derive Info URL
 	var infoURL string
-	if downloadType == "fiction" {
+	switch downloadType {
+	case "fiction":
 		infoURL = "http://library.gift/fiction/" + id
-	} else if downloadType == "non-fiction" {
+	case "non-fiction":
 		infoURL = "http://library.gift/main/" + id
+	case "zlib":
+		infoURL = "https://usa1lib.org/book/" + id
+	default:
+		http.Error(w, "unknown download type", http.StatusBadRequest)
+		return
 	}
 
 	// Acquire info page
@@ -144,8 +150,18 @@ func (api *API) DownloadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer body.Close()
 
-	// Parse & Derive Download URL
-	downloadURL := client.ParseLibGenDownloadURL(body)
+	// Pick parser per source
+	var downloadURL string
+	if downloadType == "zlib" {
+		downloadURL = client.ParseZLibDownloadURL(body)
+	} else {
+		downloadURL = client.ParseLibGenDownloadURL(body)
+	}
+
+	if downloadURL == "" {
+		http.Error(w, "download URL not found", http.StatusNotFound)
+		return
+	}
 
 	// Redirect
 	http.Redirect(w, r, downloadURL, 301)
