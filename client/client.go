@@ -60,9 +60,19 @@ func ParseLibGenFiction(body io.ReadCloser) []opds.Entry {
 		fileType := strings.ToLower(strings.TrimSpace(fileDescSplit[0]))
 
 		// Parse Upload Date
-		uploadedRaw, _ := fileItem.Attr("title")
-		uploadedDateRaw := strings.Split(uploadedRaw, "Uploaded at ")[1]
-		uploadDate, _ := time.Parse("2006-01-02 15:04:05", uploadedDateRaw)
+		uploadedRaw, hasTitle := fileItem.Attr("title")
+		if !hasTitle {
+			return
+		}
+		parts := strings.Split(uploadedRaw, "Uploaded at ")
+		if len(parts) < 2 {
+			return
+		}
+		uploadedDateRaw := parts[1]
+		uploadDate, err := time.Parse("2006-01-02 15:04:05", uploadedDateRaw)
+		if err != nil {
+			return
+		}
 
 		// Parse MD5
 		editHref, _ := rawBook.Find("td:nth-child(7) a").Attr("href")
@@ -130,8 +140,14 @@ func ParseLibGenNonFiction(body io.ReadCloser) []opds.Entry {
 
 		// Parse MD5
 		titleRaw := rawBook.Find("td:nth-child(3) [id]")
-		editHref, _ := titleRaw.Attr("href")
+		editHref, exists := titleRaw.Attr("href")
+		if !exists || editHref == "" {
+			return
+		}
 		hrefArray := strings.Split(editHref, "?md5=")
+		if len(hrefArray) < 2 {
+			return
+		}
 		id := hrefArray[1]
 
 		// Parse Other Details
