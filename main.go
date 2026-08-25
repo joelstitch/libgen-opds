@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/signal"
 
@@ -23,7 +24,7 @@ func main() {
 	}
 	err := app.Run(os.Args)
 	if err != nil {
-		// log.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
